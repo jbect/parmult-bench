@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ -n "$1" ]; then
+    NWORKERS=${1}
+else
+    echo "Argument NWORKERS missing."
+    exit 1
+fi
+
+PREFIX=`hostname`-job
+rm -f ${PREFIX}*
+
+for (( i=1; i<=${NWORKERS}; i++ ))
+do
+    echo "Starting job ${i}/${NWORKERS}"
+    (python3 mult.py ${2} && echo DONE) > ${PREFIX}${i} &
+done
+
+while [ `cat ${PREFIX}* | wc -l` -ne ${NWORKERS} ]
+do
+    sleep 0.05
+done

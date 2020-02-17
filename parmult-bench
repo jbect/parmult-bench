@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [ -n "$1" ]; then
+    NWORKERS_MAX=${1}
+else
+    echo "Argument NWORKERS_MAX missing."
+    exit 1
+fi
+
+if [ -n "$2" ]; then
+    MATRIX_ORDER=${2}
+else
+    echo "Argument MATRIX_ORDER missing."
+    exit 1
+fi
+
+export OMP_NUM_THREADS=1
+
+OUTPUT=`hostname`-${NWORKERS_MAX}-${MATRIX_ORDER}-`date +"%Y%m%d-%Hh%M"`.data
+echo "nworkers, runtime" > ${OUTPUT}
+
+echo "NWORKERS_MAX:     ${NWORKERS_MAX}"
+echo "MATRIX_ORDER:     ${MATRIX_ORDER}"
+echo "OMP_NUM_THREADS:  ${OMP_NUM_THREADS}"
+echo "OUTPUT:           ${OUTPUT}"
+echo
+
+TMP=`tempfile`
+
+for (( workers=1; workers<=${NWORKERS_MAX}; workers++ ))
+do
+    echo "nworkers=${workers}  (NWORKERS_MAX=${NWORKERS_MAX})"
+    /usr/bin/time -f %e -o ${TMP} ./parmult ${workers} ${MATRIX_ORDER}
+    RUNTIME=$(<${TMP})
+    echo " => RUNTIME=${RUNTIME}"
+    echo "${workers}, ${RUNTIME}" >> ${OUTPUT}
+    echo
+done
+
+rm -f `hostname`-job*
